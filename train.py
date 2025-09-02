@@ -19,10 +19,11 @@ def setup_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
 
 
 def printArgs(args, savePath):
@@ -46,7 +47,16 @@ def init(config):
     print('----------------------------------')
     print('Begin Time: ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     printArgs(config, loger_path)
-    os.environ['CUDA_VISIBLE_DEVICES'] = config.gpu_id
+    
+    # Check device availability
+    if torch.cuda.is_available():
+        os.environ['CUDA_VISIBLE_DEVICES'] = config.gpu_id
+        config.device = 'cuda'
+        print(f'Using CUDA device: {config.gpu_id}')
+    else:
+        config.device = 'cpu'
+        print('CUDA not available. Using CPU for training.')
+    
     setup_seed(config.seed)
 
     # Save the traning files.

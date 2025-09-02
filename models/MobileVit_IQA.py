@@ -82,7 +82,9 @@ class MAL(nn.Module):
         self.in_dim = in_dim
 
     def forward(self, features):
-        feature = torch.tensor([]).cuda()
+        # Get device from input features
+        device = features[0].device if len(features) > 0 else torch.device('cpu')
+        feature = torch.tensor([]).to(device)
         for index, _ in enumerate(features):
             feature = torch.cat((feature, self.attention_module[index](features[index]).unsqueeze(0)), dim=0)
         features = feature
@@ -178,7 +180,9 @@ class Model(nn.Module):
         x = x.permute(1, 0, 2, 3, 4)  # bs, 4, 768, 28 * 28
 
         # Different Opinion Featurs (DOF)
-        DOF = torch.tensor([]).cuda()
+        # Get device from input tensor
+        device = x.device
+        DOF = torch.tensor([]).to(device)
         for index, _ in enumerate(self.MALs):
             DOF = torch.cat((DOF, self.MALs[index](x).unsqueeze(0)), dim=0)
         DOF = rearrange(DOF, 'n c d (w h) -> n c d w h', w=self.input_size, h=self.input_size)  # M, bs, 768, 28, 28

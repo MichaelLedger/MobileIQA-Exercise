@@ -18,6 +18,10 @@ def cal_srocc_plcc(pred_score, gt_score):
 
 class Solver:
     def __init__(self, config, path, train_index, test_index):
+        # Set device
+        self.device = torch.device(config.device if hasattr(config, 'device') else 'cuda' if torch.cuda.is_available() else 'cpu')
+        print(f'Using device: {self.device}')
+        
         train_loader = data_loader.Data_Loader(config, path, train_index, istrain=True)
         test_loader = data_loader.Data_Loader(config, path, test_index, istrain=False)
         self.train_data = train_loader.get_data()
@@ -26,9 +30,9 @@ class Solver:
         print('Testing data number: ', len(test_index))
         
         if config.loss == 'MAE':
-            self.loss = torch.nn.L1Loss().cuda()
+            self.loss = torch.nn.L1Loss().to(self.device)
         elif config.loss == 'MSE':
-            self.loss = torch.nn.MSELoss().cuda()
+            self.loss = torch.nn.MSELoss().to(self.device)
         else:
             raise 'Only Support MAE and MSE loss.'
 
@@ -36,19 +40,19 @@ class Solver:
             pretrain = config.teacher_pkl
             print('Loading teacher_pkl...', pretrain)
             from models import MobileVit_IQA as Teacher
-            self.Teacher = Teacher.Model(is_teacher=True).cuda()
-            self.Teacher.load_state_dict(torch.load(pretrain))
+            self.Teacher = Teacher.Model(is_teacher=True).to(self.device)
+            self.Teacher.load_state_dict(torch.load(pretrain, map_location=self.device))
             self.Teacher.train(False)
             
             print('Loading netAttIQAMoNet...')
             from models import MobileNet_IQA as Student
-            self.Student = Student.model().cuda()
+            self.Student = Student.model().to(self.device)
             self.Student.train(True)
         else:
             if config.model == 'MobileVit_IQA':
                 print('Loading MobileVit_IQA...')
                 from models import MobileVit_IQA as model
-                self.model = model.Model().cuda()
+                self.model = model.Model().to(self.device)
                 self.model.train(True)
 
         self.epochs = config.epochs
@@ -73,8 +77,8 @@ class Solver:
 
             with torch.no_grad():
                 for img, label in tqdm(self.test_data,ncols=85):
-                    full_img = img.cuda()
-                    label = label.view(-1).cuda()
+                    full_img = img.to(self.device)
+                    label = label.view(-1).to(self.device)
 
                     _, S_DOF, stu_score, tea_score = self.Student(full_img, self.Teacher)
                     
@@ -98,8 +102,8 @@ class Solver:
             gt_scores = []
 
             for idx, (img, label) in enumerate(tqdm(self.train_data,ncols=85)):
-                full_img = img.cuda()
-                label = label.view(-1).cuda()
+                full_img = img.to(self.device)
+                label = label.view(-1).to(self.device)
                 
                 with torch.no_grad():
                     T_x, T_DOF, T_score = self.Teacher(full_img)
@@ -144,11 +148,9 @@ class Solver:
 
             with torch.no_grad():
                 for img, label in tqdm(self.test_data,ncols=85):
-                    full_img = img.cuda()
-                    label = label.view(-1).cuda()
-
+                    full_img = img.to(self.device)
+                    label = label.view(-1).to(self.device)
                     pred = self.model(full_img)
-
                     pred_scores = pred_scores + pred.cpu().tolist()
                     gt_scores = gt_scores + label.cpu().tolist()
 
@@ -167,8 +169,8 @@ class Solver:
             gt_scores = []
 
             for idx, (img, label) in enumerate(tqdm(self.train_data,ncols=85)):
-                full_img = img.cuda()
-                label = label.view(-1).cuda()
+                full_img = img.to(self.device)
+                label = label.view(-1).to(self.device)
                 
                 pred  = self.model(full_img)
                 loss = self.loss(pred.view(-1), label.float().detach()).unsqueeze(0)
