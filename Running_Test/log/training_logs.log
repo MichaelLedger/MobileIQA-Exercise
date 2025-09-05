@@ -1,6 +1,6 @@
 All train and test data will be saved in:  ./Running_Test
 ----------------------------------
-Begin Time:  2025-09-05 16:02:59
+Begin Time:  2025-09-05 16:05:58
 --------------args----------------
 seed                 3407
 gpu_id               1
@@ -27,3 +27,4 @@ Testing data number:  2225
 Loading MobileVit_IQA...
 ----------------------------------
 Epoch	Train_Loss	Train_KRCC	Train_SROCC	Train_PLCC	Test_KRCC	Test_SROCC	Test_PLCC
+Warning: Failed to load image /Users/gavinxiang/Downloads/MLDataset/SPAQ/TestImage1/01684.jpg, using black image instead

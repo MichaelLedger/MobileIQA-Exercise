@@ -200,10 +200,14 @@ def load_image(img_path, resize_size):
         d_img = d_img.resize(size)
         return d_img
     
-    d_img = Image.open(img_path).convert('RGB')
-    full_img = resize(d_img, resize_size)
-    
-    return full_img
+    try:
+        d_img = Image.open(img_path).convert('RGB')
+        full_img = resize(d_img, resize_size)
+        return full_img
+    except (OSError, IOError) as e:
+        print(f"Warning: Failed to load image {img_path}, using black image instead")
+        # Return a black image of the requested size
+        return Image.new('RGB', resize_size, (0, 0, 0))
 
 def pil_loader(path):
     with open(path, 'rb') as f:
