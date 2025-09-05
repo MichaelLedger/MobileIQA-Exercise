@@ -1,9 +1,9 @@
 All train and test data will be saved in:  ./Running_Test
 ----------------------------------
-Begin Time:  2025-09-01 08:55:16
+Begin Time:  2025-09-05 14:46:53
 --------------args----------------
-seed                 570908
-gpu_id               0
+seed                 3407
+gpu_id               1
 model                MobileVit_IQA
 backbone             vit_base_patch8_224
 mal_num              3
@@ -12,15 +12,15 @@ loss                 MSE
 lr                   1e-05
 weight_decay         1e-05
 batch_size           8
-epochs               10
+epochs               3
 T_max                50
 eta_min              0
 save_path            ./Running_Test
 teacher_pkl          None
 ----------------------------------
 CUDA not available. Using CPU for training.
-Train idx:  [8631, 3046, 1291, 7936, 7271, 3010, 6023, 6332, 4777, 8824]
-Test idx:  [9507, 264, 886, 9484, 3455, 3482, 2112, 3256, 5960, 1462]
+Train idx:  [10472, 5014, 1591, 1270, 4622, 9289, 6775, 2176, 9587, 7441]
+Test idx:  [7776, 5689, 6820, 4202, 2400, 10579, 618, 2425, 4680, 1114]
 Using device: cpu
 Traning data number:  8900
 Testing data number:  2225

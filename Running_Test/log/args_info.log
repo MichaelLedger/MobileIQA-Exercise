@@ -1,6 +1,6 @@
 --------------args----------------
-seed                	570908
-gpu_id              	0
+seed                	3407
+gpu_id              	1
 model               	MobileVit_IQA
 backbone            	vit_base_patch8_224
 mal_num             	3
@@ -9,7 +9,7 @@ loss                	MSE
 lr                  	1e-05
 weight_decay        	1e-05
 batch_size          	8
-epochs              	10
+epochs              	3
 T_max               	50
 eta_min             	0
 save_path           	./Running_Test

@@ -73,13 +73,19 @@ class SPAQ(data.Dataset):
         sample = []
         gt = []
 
-        xls_file = os.path.join(root, 'Annotations', 'MOS_and_Image_attribute_scores.xlsx')
+        xls_file = os.path.join(root, 'Annotations', 'MOS and Image attribute scores.xlsx')
         workbook = load_workbook(xls_file)
         booksheet = workbook.active
         rows = booksheet.rows
         for count, row in enumerate(rows, 2):
             if count - 2 in index:
-                sample.append(os.path.join(root, 'img', booksheet.cell(row=count, column=1).value))
+                img_name = booksheet.cell(row=count, column=1).value
+                # Find which TestImage directory contains the image
+                for i in range(1, 8):
+                    test_dir = os.path.join(root, f'TestImage{i}')
+                    if os.path.exists(os.path.join(test_dir, img_name)):
+                        sample.append(os.path.join(test_dir, img_name))
+                        break
                 mos = booksheet.cell(row=count, column=2).value
                 mos = np.array(mos)
                 mos = mos.astype(np.float32)

@@ -1,7 +1,7 @@
 {
-    "livec": ["/disk1/chenzewen/sciResLife/ALotOfDataset/IQA/ChallengeDB_release", 1162],
+    "livec": ["/Users/gavinxiang/Downloads/MobileIQA-Exercise/Dataset/LIVEC", 1162],
     "koniq10k": ["/disk1/chenzewen/sciResLife/ALotOfDataset/IQA/koniq-10k", 10073],
     "bid": ["/disk1/chenzewen/sciResLife/ALotOfDataset/IQA/BID/ImageDatabase", 586],
-    "spaq": ["/Users/gavinxiang/Downloads/MobileIQA-Exercise/Dataset/SPAQ", 11125],
-    "uhdiqa": ["/disk1/chenzewen/Competition/ECCV_2024_IQA/uhd_iqa", 4269]
+    "spaq": ["/Users/gavinxiang/Downloads/MLDataset/SPAQ", 11125],
+    "uhdiqa": ["/Users/gavinxiang/Downloads/MobileIQA-Exercise/Dataset/UHDIQA", 4269]
 }

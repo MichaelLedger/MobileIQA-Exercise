@@ -1,0 +1,4 @@
+Running_Distill/
+Running_Test/
+*.pyc
+*venv/
