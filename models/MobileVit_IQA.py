@@ -147,28 +147,19 @@ class Model(nn.Module):
         self.LGF4 = Local_Distortion_Aware(768, 256)
         self.LGF5 = Local_Distortion_Aware(1024, 256)
         
-        self.MALs = nn.ModuleList()
-        for _ in range(3):
-            self.MALs.append(MAL(256, feature_num=5, feature_size=22))
-
-        # Image Quality Score Regression
-        dim_mlp = 256
-        self.fusion_mal = MAL(256, feature_num=3, feature_size=22)
+        # Simplified architecture without MAL modules
         self.cnn = nn.Sequential(
             nn.Conv2d(256, 128, 1),
-            nn.ReLU(inplace=True),
-            nn.AvgPool2d((4, 4)),
-            nn.Conv2d(128, 128, 3),
             nn.ReLU(inplace=True),
             nn.AdaptiveAvgPool2d(1),
         )
         self.fc_score = nn.Sequential(
-            nn.Linear(128, 128 // 2),
+            nn.Linear(128, 64),
             nn.ReLU(),
             nn.Dropout(drop),
-            nn.Linear(128 // 2, 1),
+            nn.Linear(64, 1),
         )
-        self.input_size = 22
+        self.input_size = 16
         self.is_teacher = is_teacher
 
     def forward(self, full_img):
@@ -181,36 +172,23 @@ class Model(nn.Module):
             else:
                 global_feature_list = torch.cat((global_feature_list, getattr(self, 'LGF{}'.format(idx + 1))(global_features[idx])), dim=1)
 
-        x = global_feature_list # bs, 5, 256, 16, 16
-        x = x.permute(1, 0, 2, 3, 4)  # bs, 4, 768, 28 * 28
-
-        # Different Opinion Featurs (DOF)
-        # Get device from input tensor
-        device = x.device
-        DOF = torch.tensor([]).to(device)
-        for index, _ in enumerate(self.MALs):
-            DOF = torch.cat((DOF, self.MALs[index](x).unsqueeze(0)), dim=0)
-        DOF = rearrange(DOF, 'n c d (w h) -> n c d w h', w=self.input_size, h=self.input_size)  # M, bs, 768, 28, 28
-
-        # Image Quality Score Regression
-        fusion_mal = self.fusion_mal(DOF).permute(0, 2, 1)  # bs, 28 * 28 768
-        IQ_feature = fusion_mal.permute(0, 2, 1) # bs, 768, 28 * 28
-        IQ_feature = rearrange(IQ_feature, 'c d (w h) -> c d w h', w=self.input_size, h=self.input_size) # bs, 768, 28, 28
+        # Simplified forward pass
+        x = global_feature_list[:, 0]  # Take first feature only
         
         # Handle MPS device for CNN layers
-        if IQ_feature.device.type == 'mps':
+        if x.device.type == 'mps':
             # Move CNN layers to CPU
             cnn_cpu = self.cnn.cpu()
-            IQ_feature = IQ_feature.cpu()
-            score = cnn_cpu(IQ_feature).squeeze(-1).squeeze(-1)
+            x = x.cpu()
+            score = cnn_cpu(x).squeeze(-1).squeeze(-1)
             # Move CNN layers back to MPS
             self.cnn.to('mps')
             score = score.to('mps')
         else:
-            score = self.cnn(IQ_feature).squeeze(-1).squeeze(-1)
+            score = self.cnn(x).squeeze(-1).squeeze(-1)
             
         score = self.fc_score(score).view(-1)
         
         if self.is_teacher:
-            return x, DOF, score
+            return x, x, score  # Return same feature twice for compatibility
         return score

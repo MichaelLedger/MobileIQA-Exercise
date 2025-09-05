@@ -1,6 +1,6 @@
 All train and test data will be saved in:  ./Running_Test
 ----------------------------------
-Begin Time:  2025-09-05 15:25:42
+Begin Time:  2025-09-05 16:02:59
 --------------args----------------
 seed                 3407
 gpu_id               1
@@ -11,7 +11,7 @@ dataset              spaq
 loss                 MSE
 lr                   1e-05
 weight_decay         1e-05
-batch_size           8
+batch_size           4
 epochs               1
 T_max                50
 eta_min              0
