@@ -120,10 +120,15 @@ class Local_Distortion_Aware(nn.Module):
         self.avg = nn.AdaptiveAvgPool2d((22, 22))
 
     def forward(self, features):
-        local_1 = self.avg(self.grelu(self.cnn1(features)))
-        # print('local_1', local_1.shape)
+        def safe_avg_pool(x):
+            if x.device.type == 'mps':
+                x = x.cpu()
+                x = self.avg(x)
+                return x.to('mps')
+            return self.avg(x)
+            
+        local_1 = safe_avg_pool(self.grelu(self.cnn1(features)))
         local_2 = self.cnn2(local_1)
-        # print('local_2', local_2.shape) # bs, 128, 16, 16
 
         return local_2.unsqueeze(1)  # bs, 1, 128, 16, 16
     
@@ -191,7 +196,19 @@ class Model(nn.Module):
         fusion_mal = self.fusion_mal(DOF).permute(0, 2, 1)  # bs, 28 * 28 768
         IQ_feature = fusion_mal.permute(0, 2, 1) # bs, 768, 28 * 28
         IQ_feature = rearrange(IQ_feature, 'c d (w h) -> c d w h', w=self.input_size, h=self.input_size) # bs, 768, 28, 28
-        score = self.cnn(IQ_feature).squeeze(-1).squeeze(-1)
+        
+        # Handle MPS device for CNN layers
+        if IQ_feature.device.type == 'mps':
+            # Move CNN layers to CPU
+            cnn_cpu = self.cnn.cpu()
+            IQ_feature = IQ_feature.cpu()
+            score = cnn_cpu(IQ_feature).squeeze(-1).squeeze(-1)
+            # Move CNN layers back to MPS
+            self.cnn.to('mps')
+            score = score.to('mps')
+        else:
+            score = self.cnn(IQ_feature).squeeze(-1).squeeze(-1)
+            
         score = self.fc_score(score).view(-1)
         
         if self.is_teacher:

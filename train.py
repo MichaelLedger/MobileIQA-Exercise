@@ -49,13 +49,16 @@ def init(config):
     printArgs(config, loger_path)
     
     # Check device availability
-    if torch.cuda.is_available():
+    if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+        config.device = torch.device("mps")
+        print('Using MPS (Metal Performance Shaders) for training.')
+    elif torch.cuda.is_available():
         os.environ['CUDA_VISIBLE_DEVICES'] = config.gpu_id
-        config.device = 'cuda'
+        config.device = torch.device("cuda")
         print(f'Using CUDA device: {config.gpu_id}')
     else:
-        config.device = 'cpu'
-        print('CUDA not available. Using CPU for training.')
+        config.device = torch.device("cpu")
+        print('Neither MPS nor CUDA available. Using CPU for training.')
     
     setup_seed(config.seed)
 

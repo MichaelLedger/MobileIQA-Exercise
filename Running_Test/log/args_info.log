@@ -9,7 +9,7 @@ loss                	MSE
 lr                  	1e-05
 weight_decay        	1e-05
 batch_size          	8
-epochs              	3
+epochs              	1
 T_max               	50
 eta_min             	0
 save_path           	./Running_Test

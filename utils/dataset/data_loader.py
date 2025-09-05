@@ -48,5 +48,14 @@ class Data_Loader(object):
             raise Exception("Only support livec, koniq10k, bid, spaq, and uhdiqa.")
 
     def get_data(self):
-        dataloader = torch.utils.data.DataLoader(self.data, batch_size=self.batch_size, shuffle=False, num_workers=8)
+        # Use num_workers=0 for MPS to avoid multiprocessing issues
+        device_type = torch.device(torch.device("mps" if torch.backends.mps.is_available() else "cpu")).type
+        num_workers = 0 if device_type == 'mps' else 8
+        dataloader = torch.utils.data.DataLoader(
+            self.data,
+            batch_size=self.batch_size,
+            shuffle=self.istrain,  # Shuffle only training data
+            num_workers=num_workers,
+            pin_memory=True
+        )
         return dataloader

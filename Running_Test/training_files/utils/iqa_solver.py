@@ -19,8 +19,11 @@ def cal_srocc_plcc(pred_score, gt_score):
 class Solver:
     def __init__(self, config, path, train_index, test_index):
         # Set device
-        self.device = torch.device(config.device if hasattr(config, 'device') else 'cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = config.device
         print(f'Using device: {self.device}')
+        
+        # Set number of workers for dataloader
+        self.num_workers = 0 if self.device.type == 'mps' else 4
         
         train_loader = data_loader.Data_Loader(config, path, train_index, istrain=True)
         test_loader = data_loader.Data_Loader(config, path, test_index, istrain=False)
@@ -121,6 +124,13 @@ class Solver:
                 epoch_loss.append(score_loss.item())
                 
                 loss.backward()
+                
+                # Handle device mismatch for MPS
+                if self.device.type == 'mps':
+                    for param in self.Student.parameters():
+                        if param.grad is not None:
+                            param.grad = param.grad.to(self.device)
+                
                 self.optimizer.step()
                 self.optimizer.zero_grad()
             self.scheduler.step()
@@ -182,6 +192,13 @@ class Solver:
                 epoch_loss.append(loss.item())
                 
                 loss.backward()
+                
+                # Handle device mismatch for MPS
+                if self.device.type == 'mps':
+                    for param in self.model.parameters():
+                        if param.grad is not None:
+                            param.grad = param.grad.to(self.device)
+                
                 self.optimizer.step()
                 self.optimizer.zero_grad()
             self.scheduler.step()
