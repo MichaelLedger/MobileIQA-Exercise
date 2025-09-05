@@ -43,13 +43,14 @@ class Solver:
             pretrain = config.teacher_pkl
             print('Loading teacher_pkl...', pretrain)
             from models import MobileVit_IQA as Teacher
-            self.Teacher = Teacher.Model(is_teacher=True).to(self.device)
-            self.Teacher.load_state_dict(torch.load(pretrain, map_location=self.device))
+            self.Teacher = Teacher.Model(is_teacher=True)
+            # Load teacher model on CPU and keep it there
+            self.Teacher.load_state_dict(torch.load(pretrain, map_location='cpu'))
             self.Teacher.train(False)
             
-            print('Loading netAttIQAMoNet...')
+            print('Loading MobileNet_IQA...')
             from models import MobileNet_IQA as Student
-            self.Student = Student.model().to(self.device)
+            self.Student = Student.MoNet().to(self.device)
             self.Student.train(True)
         else:
             if config.model == 'MobileVit_IQA':
@@ -59,7 +60,10 @@ class Solver:
                 self.model.train(True)
 
         self.epochs = config.epochs
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+        if config.teacher_pkl is not None:
+            self.optimizer = torch.optim.Adam(self.Student.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+        else:
+            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=config.T_max, eta_min=config.eta_min)
 
         self.model_save_path = os.path.join(config.save_path, 'best_model.pkl')
@@ -83,6 +87,8 @@ class Solver:
                     full_img = img.to(self.device)
                     label = label.view(-1).to(self.device)
 
+                    # Move input to CPU for teacher model
+                    full_img_cpu = full_img.cpu()
                     _, S_DOF, stu_score, tea_score = self.Student(full_img, self.Teacher)
                     
                     pred_scores = pred_scores + stu_score.cpu().tolist()
@@ -109,7 +115,13 @@ class Solver:
                 label = label.view(-1).to(self.device)
                 
                 with torch.no_grad():
-                    T_x, T_DOF, T_score = self.Teacher(full_img)
+                    # Move input to CPU for teacher model
+                    full_img_cpu = full_img.cpu()
+                    T_x, T_DOF, T_score = self.Teacher(full_img_cpu)
+                    # Move teacher outputs to student's device
+                    T_x = T_x.to(self.device)
+                    T_DOF = T_DOF.to(self.device)
+                    T_score = T_score.to(self.device)
                 S_x, S_DOF, stu_score, tea_score = self.Student(full_img, self.Teacher)
                 
                 DOF_loss = self.loss(S_DOF, T_DOF.detach())

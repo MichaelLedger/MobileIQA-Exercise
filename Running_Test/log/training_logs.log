@@ -28,3 +28,13 @@ Loading MobileVit_IQA...
 ----------------------------------
 Epoch	Train_Loss	Train_KRCC	Train_SROCC	Train_PLCC	Test_KRCC	Test_SROCC	Test_PLCC
 Warning: Failed to load image /Users/gavinxiang/Downloads/MLDataset/SPAQ/TestImage1/01684.jpg, using black image instead
+Warning: Failed to load image /Users/gavinxiang/Downloads/MLDataset/SPAQ/TestImage2/03367.jpg, using black image instead
+Warning: Failed to load image /Users/gavinxiang/Downloads/MLDataset/SPAQ/TestImage6/10240.jpg, using black image instead
+Warning: Failed to load image /Users/gavinxiang/Downloads/MLDataset/SPAQ/TestImage4/06823.jpg, using black image instead
+Warning: Failed to load image /Users/gavinxiang/Downloads/MLDataset/SPAQ/TestImage3/05093.jpg, using black image instead
+Warning: Failed to load image /Users/gavinxiang/Downloads/MLDataset/SPAQ/TestImage5/08556.jpg, using black image instead
+Model saved in:  ./Running_Test/best_model.pkl
+1	0.0516	0.2857	0.4151	0.3439	0.4817	0.6774	0.6423
+Best test SROCC 0.67742, PLCC 0.642336
+KROCC: 0.4816901637164166, SROCC: 0.6774203032499746, PLCC: 0.6423360006759815
+End Time:  2025-09-05 16:29:10

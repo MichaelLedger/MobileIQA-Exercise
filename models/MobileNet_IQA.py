@@ -128,7 +128,14 @@ class Local_Distortion_Aware(nn.Module):
         self.avg = nn.AdaptiveAvgPool2d((22, 22))
 
     def forward(self, features):
-        local_1 = self.avg(self.grelu(self.cnn1(features)))
+        def safe_avg_pool(x):
+            if x.device.type == 'mps':
+                x = x.cpu()
+                x = self.avg(x)
+                return x.to('mps')
+            return self.avg(x)
+            
+        local_1 = safe_avg_pool(self.grelu(self.cnn1(features)))
         local_2 = self.cnn2(local_1)
 
         return local_2.unsqueeze(1)  # bs, 1, 128, 16, 16
@@ -196,12 +203,27 @@ class MoNet(nn.Module):
         IQ_feature = fusion_mal.permute(0, 2, 1) # bs, 768, 28 * 28
         IQ_feature = rearrange(IQ_feature, 'c d (w h) -> c d w h', w=self.input_size, h=self.input_size) # bs, 768, 28, 28
         
-        stu_score = self.cnn(IQ_feature).squeeze(-1).squeeze(-1)
+        # Handle MPS device for CNN layers
+        if IQ_feature.device.type == 'mps':
+            # Move CNN layers to CPU
+            cnn_cpu = self.cnn.cpu()
+            IQ_feature = IQ_feature.cpu()
+            stu_score = cnn_cpu(IQ_feature).squeeze(-1).squeeze(-1)
+            # Move CNN layers back to MPS
+            self.cnn.to('mps')
+            stu_score = stu_score.to('mps')
+        else:
+            stu_score = self.cnn(IQ_feature).squeeze(-1).squeeze(-1)
+            
         stu_score = self.fc_score(stu_score).view(-1)
         
         if teacher_model is not None:
-            tea_score = teacher_model.cnn(IQ_feature).squeeze(-1).squeeze(-1)
+            # Teacher model is always on CPU
+            IQ_feature_cpu = IQ_feature.cpu()
+            tea_score = teacher_model.cnn(IQ_feature_cpu).squeeze(-1).squeeze(-1)
             tea_score = teacher_model.fc_score(tea_score).view(-1)
+            # Move score back to student's device
+            tea_score = tea_score.to(IQ_feature.device)
         else:
             return stu_score
         
